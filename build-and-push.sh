@@ -2,7 +2,7 @@
 
 # Configuration
 IMAGE_NAME="reservation-event-processor"
-REGISTRY="docker.io/g420"
+REGISTRY="docker.io/prognosepolito"
 
 # Colors for output
 GREEN='\033[0;32m'

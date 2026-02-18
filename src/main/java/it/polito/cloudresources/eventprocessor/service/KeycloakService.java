@@ -14,6 +14,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PreDestroy;
 import java.util.Optional;
 
 /**
@@ -45,18 +46,34 @@ public class KeycloakService {
     @Value("${keycloak.credentials.secret}")
     private String clientSecret;
 
+    // FIX: Lazily-initialized singleton to avoid creating a new HTTP client on every method call
+    private volatile Keycloak keycloakClient;
 
     /**
      * Creates an admin Keycloak client
      */
     protected Keycloak getKeycloakClient() {
-        return KeycloakBuilder.builder()
-                .serverUrl(authServerUrl)
-                .realm(realm)
-                .clientId(clientId)
-                .clientSecret(clientSecret)
-                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-                .build();
+        if (keycloakClient == null) {
+            synchronized (this) {
+                if (keycloakClient == null) {
+                    keycloakClient = KeycloakBuilder.builder()
+                            .serverUrl(authServerUrl)
+                            .realm(realm)
+                            .clientId(clientId)
+                            .clientSecret(clientSecret)
+                            .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                            .build();
+                }
+            }
+        }
+        return keycloakClient;
+    }
+    
+    @PreDestroy
+    public void closeKeycloakClient() {
+        if (keycloakClient != null) {
+            keycloakClient.close();
+        }
     }
 
     /**
