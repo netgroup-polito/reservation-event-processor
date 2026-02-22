@@ -1,6 +1,5 @@
 package it.polito.cloudresources.eventprocessor.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import it.polito.cloudresources.eventprocessor.model.WebhookEventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,43 +7,52 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 /**
- * Payload structure for event-related webhooks.
+ * DTO representing the JSON payload sent to webhooks.
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL) // Exclude null fields from JSON
 public class EventWebhookPayload {
     private WebhookEventType eventType;
     private ZonedDateTime timestamp;
     private String eventId;
     private Long webhookId;
-
-    // User Information
+    
+    // User Info
     private String userId;
     private String username;
     private String email;
     
-    private String sshPublicKey;
+    // SSH Keys
+    private List<String> sshKeys; // New wallet support
 
-    // Event Information
+    // Event/Resource Details
+    private String operatingSystem;
+
+    // --- NUOVI CAMPI (ISO & CHECKSUM) ---
+    private String imageUrl;
+    private String checksumUrl;
+    private String checksumType;
+    // ------------------------------------
+
     private String eventTitle;
     private String eventDescription;
     private ZonedDateTime eventStart;
     private ZonedDateTime eventEnd;
-    private String customParameters; // JSON string of custom parameter values
-
-    // Resource Information
+    
+    // CORRETTO: Cambiato da Map<String, String> a String per corrispondere all'Entità
+    private String customParameters;
+    
+    // Resource Info
     private Long resourceId;
     private String resourceName;
-    private String resourceType;
     private String resourceSpecs;
     private String resourceLocation;
-
-    // Site Information
     private String siteId;
     private String siteName;
+    private String resourceType;
 }

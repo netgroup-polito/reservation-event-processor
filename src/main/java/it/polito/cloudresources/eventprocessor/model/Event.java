@@ -43,6 +43,21 @@ public class Event extends AuditableEntity {
     @Column(name = "end_time")
     private ZonedDateTime end;
 
+    @NotNull
+    @Column(name = "operating_system")
+    private String operatingSystem;
+
+    // --- NUOVI CAMPI METAL3 (ISO & CHECKSUM) ---
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "checksum_url")
+    private String checksumUrl;
+
+    @Column(name = "checksum_type")
+    private String checksumType;
+    // -------------------------------------------
+
     @ManyToOne(fetch = FetchType.LAZY) // Lazy fetch resource
     @JoinColumn(name = "resource_id", nullable = false)
     private Resource resource;
@@ -95,14 +110,18 @@ public class Event extends AuditableEntity {
     @Override
     public String toString() {
         return "Event{" +
-               "id=" + id +
-               ", title='" + title + '\'' +
-               ", start=" + start +
-               ", end=" + end +
-               ", resourceId=" + (resource != null ? resource.getId() : null) +
-               ", keycloakId='" + keycloakId + '\'' +
-               ", startNotifiedAt=" + startNotifiedAt +
-               ", endNotifiedAt=" + endNotifiedAt +
-               '}';
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", start=" + start +
+                ", end=" + end +
+                ", operatingSystem='" + operatingSystem + '\'' +
+                ", imageUrl='" + imageUrl + '\'' +
+                ", checksumUrl='" + checksumUrl + '\'' +
+                ", checksumType='" + checksumType + '\'' +
+                ", resourceId=" + (resource != null ? resource.getId() : null) +
+                ", keycloakId='" + keycloakId + '\'' +
+                ", startNotifiedAt=" + startNotifiedAt +
+                ", endNotifiedAt=" + endNotifiedAt +
+                '}';
     }
 }
