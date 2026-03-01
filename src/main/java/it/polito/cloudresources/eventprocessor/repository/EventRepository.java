@@ -14,40 +14,45 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     /**
      * Finds events that are starting or ending within the given time window and have not been processed yet.
-     * An event's start is considered unprocessed if startNotifiedAt is null.
-     * An event's end is considered unprocessed if endNotifiedAt is null.
-     *
-     * @param windowStart The start of the time window.
-     * @param windowEnd   The end of the time window.
-     * @return A list of unprocessed events within the window.
+     * Excludes logically deleted events.
      */
-    @Query("SELECT e FROM Event e WHERE " +
+    @Query("SELECT e FROM Event e WHERE e.deleted = false AND (" +
            "(e.startNotifiedAt IS NULL AND e.start >= :windowStart AND e.start <= :windowEnd) OR " +
-           "(e.endNotifiedAt IS NULL AND e.end >= :windowStart AND e.end <= :windowEnd)")
+           "(e.endNotifiedAt IS NULL AND e.end >= :windowStart AND e.end <= :windowEnd))")
     List<Event> findUnprocessedEventsInWindow(@Param("windowStart") ZonedDateTime windowStart,
                                               @Param("windowEnd") ZonedDateTime windowEnd);
 
     /**
      * Find events that start within a date range and haven't had their start notification sent.
+     * Excludes logically deleted events.
      */
-    @Query("SELECT e FROM Event e WHERE e.startNotifiedAt IS NULL AND e.start >= :startDate AND e.start <= :endDate")
+    @Query("SELECT e FROM Event e WHERE e.deleted = false AND e.startNotifiedAt IS NULL AND e.start >= :startDate AND e.start <= :endDate")
     List<Event> findUnprocessedEventsStartingBetween(
             @Param("startDate") ZonedDateTime startDate,
             @Param("endDate") ZonedDateTime endDate);
 
     /**
      * Find events that end within a date range and haven't had their end notification sent.
+     * Excludes logically deleted events.
      */
-    @Query("SELECT e FROM Event e WHERE e.endNotifiedAt IS NULL AND e.end >= :startDate AND e.end <= :endDate")
+    @Query("SELECT e FROM Event e WHERE e.deleted = false AND e.endNotifiedAt IS NULL AND e.end >= :startDate AND e.end <= :endDate")
     List<Event> findUnprocessedEventsEndingBetween(
             @Param("startDate") ZonedDateTime startDate,
             @Param("endDate") ZonedDateTime endDate);
 
     /**
      * Find currently active events for a user (events that have started but not yet ended).
+     * Excludes logically deleted events.
      */
-    @Query("SELECT e FROM Event e WHERE e.keycloakId = :keycloakId AND e.start <= :currentTime AND e.end > :currentTime")
+    @Query("SELECT e FROM Event e WHERE e.deleted = false AND e.keycloakId = :keycloakId AND e.start <= :currentTime AND e.end > :currentTime")
     List<Event> findActiveEventsForUser(
             @Param("keycloakId") String keycloakId,
             @Param("currentTime") ZonedDateTime currentTime);
+
+    // --- NUOVO METODO PER LA CANCELLAZIONE LOGICA ---
+    /**
+     * Trova tutti gli eventi che sono stati marcati per la cancellazione dal Backend
+     * ma che non sono ancora stati processati dall'Event Processor.
+     */
+    List<Event> findByDeletedTrue();
 }

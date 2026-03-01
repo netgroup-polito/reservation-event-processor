@@ -77,6 +77,11 @@ public class Event extends AuditableEntity {
     @Column(name = "end_notified_at")
     private ZonedDateTime endNotifiedAt;
 
+    // --- CAMPO PER LA CANCELLAZIONE LOGICA ---
+    @Column(name = "deleted", nullable = false)
+    private boolean deleted = false;
+    // -----------------------------------------
+
     /**
      * Pre-persist hook to ensure start and end dates have correct timezone.
      */
@@ -120,6 +125,7 @@ public class Event extends AuditableEntity {
                 ", checksumType='" + checksumType + '\'' +
                 ", resourceId=" + (resource != null ? resource.getId() : null) +
                 ", keycloakId='" + keycloakId + '\'' +
+                ", deleted=" + deleted + 
                 ", startNotifiedAt=" + startNotifiedAt +
                 ", endNotifiedAt=" + endNotifiedAt +
                 '}';
