@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-/**
+/** 
  * Payload structure for batch event-related webhooks.
  * Contains multiple events that belong to the same user.
  */
