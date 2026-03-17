@@ -11,7 +11,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Entity for storing SSH keys in the database
+ * Entity for storing SSH keys in the database.
+ * Aligned with reservation-be to support 1:N relationship.
  */
 @Entity
 @Table(name = "ssh_keys")
@@ -25,9 +26,14 @@ public class SshKey {
     @GeneratedValue
     private Long id;
     
-    @Column(name = "user_id", nullable = false, unique = true)
+    // Removed "unique = true" to allow multiple keys per user
+    @Column(name = "user_id", nullable = false)
     private String userId;
     
+    // Added label field to match backend schema
+    @Column(name = "label")
+    private String label;
+
     @Column(name = "ssh_key", nullable = false, length = 4000)
     private String sshKey;
     

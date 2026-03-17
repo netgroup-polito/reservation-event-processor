@@ -21,7 +21,7 @@ public class EventProcessorService {
 
     private final EventRepository eventRepository;
     private final DateTimeUtils dateTimeUtils;
-    private final WebhookNotifierService webhookNotifierService; // Inject the new service
+    private final WebhookNotifierService webhookNotifierService;
 
     // Check for events starting soon
     @Scheduled(fixedRateString = "${event.processor.rate}")
@@ -52,7 +52,7 @@ public class EventProcessorService {
 
     // Check for events that have just ended (e.g., ended in the last minute)
     @Scheduled(fixedRateString = "${event.processor.rate}")
-    @Transactional(readOnly = true)
+    @Transactional
     public void processEndingEvents() {
         ZonedDateTime now = dateTimeUtils.ensureTimeZone(ZonedDateTime.now());
         ZonedDateTime justEndedThreshold = now.minus(1, ChronoUnit.MINUTES); // Define "just ended" as within the last minute
@@ -80,6 +80,39 @@ public class EventProcessorService {
             }
         } else {
             log.debug("No events ending recently.");
+        }
+    }
+
+    // --- NUOVO SCHEDULER: GESTIONE CANCELLAZIONI ---
+    // Cerca gli eventi marcati come "deleted" dal Backend, avvisa Python e pialla il DB.
+    @Scheduled(fixedRateString = "${event.processor.rate}")
+    @Transactional
+    public void processDeletedEvents() {
+        log.debug("Checking for logically deleted events to process and purge...");
+        
+        List<Event> deletedEvents = eventRepository.findByDeletedTrue();
+
+        if (!deletedEvents.isEmpty()) {
+            log.info("Found {} logically deleted events awaiting cleanup.", deletedEvents.size());
+
+            for (Event event : deletedEvents) {
+                // Il richiamo di getName() qui è importante anche per forzare l'inizializzazione 
+                // del proxy Lazy della risorsa prima di passarla al Webhook asincrono
+                log.info("Processing DELETED event ID: {}, Resource: {}, User: {}",
+                        event.getId(),
+                        event.getResource().getName(),
+                        event.getKeycloakId());
+
+                // 1. Inviamo la notifica al Webhook Server Python.
+                // Python valuterà il payload e capirà se la macchina è attualmente in esecuzione.
+                // Se lo è, invierà i comandi distruttivi a Kubernetes. Altrimenti non farà nulla.
+                webhookNotifierService.notify(WebhookEventType.EVENT_DELETED, event);
+
+                // 2. Pulizia definitiva. 
+                // Ora che Python è stato avvisato, possiamo cancellare fisicamente la riga dal DB.
+                log.info("Purging event {} permanently from the database.", event.getId());
+                eventRepository.delete(event);
+            }
         }
     }
 }
